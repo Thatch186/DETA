@@ -8,7 +8,7 @@ repos:
     rev: v0.4.4
     hooks:
       - id: ruff
-        args: ["check", "--fix"]
+        args: [ "--fix", "deta/", "tests/"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
