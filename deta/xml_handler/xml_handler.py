@@ -1,5 +1,7 @@
 import logging
 import xml.etree.ElementTree as ET
+import zipfile
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -80,4 +82,51 @@ class XMLHandler:
             raise
         except Exception as e:
             logger.critical(f"Unexpected XML parsing error: {e}", exc_info=True)
+            raise
+
+    def extract_from_zip(self, zip_path: str, extract_to: str) -> str:
+        """
+        Extracts the first XML file found inside the given ZIP archive.
+
+        Args:
+            zip_path: Path to the ZIP file.
+            extract_to: Directory to extract the contents to.
+
+        Returns:
+            Path to the extracted XML file.
+
+        Raises:
+            FileNotFoundError: If zip_path does not exist.
+            ValueError: If no XML file is found inside the ZIP.
+        """
+        try:
+            if not os.path.exists(zip_path):
+                raise FileNotFoundError(f"ZIP file not found: {zip_path}")
+
+            os.makedirs(extract_to, exist_ok=True)
+
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                xml_files = [f for f in zip_ref.namelist() if f.endswith(".xml")]
+                if not xml_files:
+                    raise ValueError("No XML files found inside the ZIP archive.")
+
+                xml_file_name = xml_files[0]
+                zip_ref.extract(xml_file_name, path=extract_to)
+                extracted_path = os.path.join(extract_to, xml_file_name)
+
+                logger.info(f"Extracted XML file: {extracted_path}")
+                return extracted_path
+
+        except FileNotFoundError as e:
+            logger.error(f"ZIP file not found: {e}")
+            raise
+
+        except zipfile.BadZipFile as e:
+            logger.error(f"Bad ZIP file: {e}")
+            raise
+
+        except Exception as e:
+            logger.critical(
+                f"Unexpected error while extracting ZIP file: {e}", exc_info=True
+            )
             raise
