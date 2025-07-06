@@ -2,6 +2,7 @@ import pytest
 from deta.xml_handler.xml_handler import XMLHandler
 import zipfile
 import os
+import pandas as pd
 
 VALID_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <response>
@@ -23,6 +24,29 @@ VALID_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 MALFORMED_XML = "<response><doc><str></response>"  # Missing closing tag on <str>
+
+CSV_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<BizData xmlns="urn:iso:std:iso:20022:tech:xsd:head.003.001.01">
+  <Pyld>
+    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:auth.036.001.02">
+      <FinInstrmRptgRefDataDltaRpt>
+        <FinInstrm>
+          <ModfdRcrd>
+            <FinInstrmGnlAttrbts>
+              <Id>ABC123</Id>
+              <FullNm>Alpha Corp</FullNm>
+              <ClssfctnTp>EQTY</ClssfctnTp>
+              <CmmdtyDerivInd>0</CmmdtyDerivInd>
+              <NtnlCcy>USD</NtnlCcy>
+            </FinInstrmGnlAttrbts>
+            <Issr>Issuer123</Issr>
+          </ModfdRcrd>
+        </FinInstrm>
+      </FinInstrmRptgRefDataDltaRpt>
+    </Document>
+  </Pyld>
+</BizData>
+"""
 
 
 def test_parse_xml_returns_correct_link():
@@ -121,3 +145,27 @@ def test_extract_from_zip_bad_zip(tmp_path):
 
     with pytest.raises(zipfile.BadZipFile):
         handler.extract_from_zip(str(zip_path), str(tmp_path))
+
+
+def test_convert_to_csv(tmp_path):
+    xml_path = tmp_path / "sample.xml"
+    csv_path = tmp_path / "output.csv"
+
+    with open(xml_path, "w", encoding="utf-8") as f:
+        f.write(CSV_XML)
+
+    handler = XMLHandler(str(xml_path))
+    csv_path = handler.convert_to_csv(str(csv_path))
+    df = pd.read_csv(csv_path)
+    assert os.path.exists(csv_path)
+
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 1
+
+    row = df.iloc[0]
+    assert row["FinInstrmGnlAttrbts.Id"] == "ABC123"
+    assert row["FinInstrmGnlAttrbts.FullNm"] == "Alpha Corp"
+    assert row["FinInstrmGnlAttrbts.ClssfctnTp"] == "EQTY"
+    assert row["FinInstrmGnlAttrbts.CmmdtyDerivInd"] == 0
+    assert row["FinInstrmGnlAttrbts.NtnlCcy"] == "USD"
+    assert row["Issr"] == "Issuer123"
