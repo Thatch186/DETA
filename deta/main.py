@@ -14,25 +14,25 @@ def main() -> None:
     downloader = Downloader(retries=3, timeout=10)
     try:
         first_downloaded_path = downloader.download_from_url(first_url, first_file_path)
-        logging.info(f"File downloaded successfully to {first_downloaded_path}")
-
+        logging.info(f"First file downloaded to: {first_downloaded_path}")
         handler = XMLHandler(first_file_path)
         xml_str = handler.read_xml()
-        logging.info("XML file read successfully.")
 
         second_url = handler.parse_xml(xml_str, index=1)
-        logging.info(f"Second URL extracted: {second_url}")
 
         second_file_path = "data/second_url.zip"
         second_downloaded_path = downloader.download_from_url(
             second_url, second_file_path
         )
-        logging.info(f"Second file downloaded successfully to {second_downloaded_path}")
 
         extracted_xml_path = handler.extract_from_zip(
             second_downloaded_path, extract_to="data/extracted_xml"
         )
-        logging.info(f"XML file extracted successfully to {extracted_xml_path}")
+        second_handler = XMLHandler(extracted_xml_path)
+        csv_path = second_handler.convert_to_csv(
+            output_csv_path="data/extracted_xml/converted.csv"
+        )
+        logging.info(f"CSV saved to: {csv_path}")
 
     except Exception as e:
         logging.error(f"Failed to download file: {e}")

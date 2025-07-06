@@ -2,6 +2,7 @@ import logging
 import xml.etree.ElementTree as ET
 import zipfile
 import os
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -128,5 +129,83 @@ class XMLHandler:
         except Exception as e:
             logger.critical(
                 f"Unexpected error while extracting ZIP file: {e}", exc_info=True
+            )
+            raise
+
+    logger = logging.getLogger(__name__)
+
+    def convert_to_csv(self, output_csv_path: str) -> str:
+        """
+        Converts a large XML file to CSV by streaming FinInstrm nodes.
+
+        Args:
+            output_csv_path: Path to output CSV file.
+
+        Returns:
+            pandas DataFrame containing the parsed data.
+        """
+        ns = {
+            "h": "urn:iso:std:iso:20022:tech:xsd:head.003.001.01",
+            "a": "urn:iso:std:iso:20022:tech:xsd:auth.036.001.02",
+        }
+
+        records = []
+        try:
+            context = ET.iterparse(self.file_path, events=("end",))
+            for event, elem in context:
+                if elem.tag.endswith("FinInstrm"):
+                    try:
+                        gnl = elem.find(".//a:FinInstrmGnlAttrbts", ns)
+                        issr = elem.findtext(".//a:Issr", default="", namespaces=ns)
+
+                        row = {
+                            "FinInstrmGnlAttrbts.Id": (
+                                gnl.findtext("a:Id", default="", namespaces=ns)
+                                if gnl is not None
+                                else ""
+                            ),
+                            "FinInstrmGnlAttrbts.FullNm": (
+                                gnl.findtext("a:FullNm", default="", namespaces=ns)
+                                if gnl is not None
+                                else ""
+                            ),
+                            "FinInstrmGnlAttrbts.ClssfctnTp": (
+                                gnl.findtext("a:ClssfctnTp", default="", namespaces=ns)
+                                if gnl is not None
+                                else ""
+                            ),
+                            "FinInstrmGnlAttrbts.CmmdtyDerivInd": (
+                                gnl.findtext(
+                                    "a:CmmdtyDerivInd", default="", namespaces=ns
+                                )
+                                if gnl is not None
+                                else ""
+                            ),
+                            "FinInstrmGnlAttrbts.NtnlCcy": (
+                                gnl.findtext("a:NtnlCcy", default="", namespaces=ns)
+                                if gnl is not None
+                                else ""
+                            ),
+                            "Issr": issr,
+                        }
+
+                        records.append(row)
+                    except Exception as e:
+                        logger.warning(f"Error parsing FinInstrm: {e}")
+                    finally:
+                        elem.clear()
+
+            df = pd.DataFrame(records)
+            os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
+            df.to_csv(output_csv_path, index=False)
+            logger.info(f"CSV written to {output_csv_path} with {len(df)} rows")
+            return output_csv_path
+
+        except ET.ParseError as e:
+            logger.error(f"XML parsing error: {e}")
+            raise
+        except Exception as e:
+            logger.critical(
+                f"Unexpected error during CSV conversion: {e}", exc_info=True
             )
             raise
