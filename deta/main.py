@@ -1,4 +1,5 @@
 from deta.downloader.downloader import Downloader
+from deta.xml_handler.xml_handler import XMLHandler
 import logging
 
 logging.basicConfig(
@@ -12,8 +13,22 @@ def main() -> None:
     first_file_path = "data/first_url.xml"
     downloader = Downloader(retries=3, timeout=10)
     try:
-        downloaded_path = downloader.download_from_url(first_url, first_file_path)
-        logging.info(f"File downloaded successfully to {downloaded_path}")
+        first_downloaded_path = downloader.download_from_url(first_url, first_file_path)
+        logging.info(f"File downloaded successfully to {first_downloaded_path}")
+
+        handler = XMLHandler(first_file_path)
+        xml_str = handler.read_xml()
+        logging.info("XML file read successfully.")
+
+        second_url = handler.parse_xml(xml_str, index=1)
+        logging.info(f"Second URL extracted: {second_url}")
+
+        second_file_path = "data/second_url.zip"
+        second_downloaded_path = downloader.download_from_url(
+            second_url, second_file_path
+        )
+        logging.info(f"Second file downloaded successfully to {second_downloaded_path}")
+
     except Exception as e:
         logging.error(f"Failed to download file: {e}")
 
