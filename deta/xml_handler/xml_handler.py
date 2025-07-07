@@ -132,8 +132,6 @@ class XMLHandler:
             )
             raise
 
-    logger = logging.getLogger(__name__)
-
     def convert_to_csv(self, output_csv_path: str) -> str:
         """
         Converts a large XML file to CSV by streaming FinInstrm nodes.
