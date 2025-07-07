@@ -58,3 +58,22 @@ class CSVHandler:
 
         except Exception as e:
             raise ValueError(f"Error adding 'a_count' column: {e}") from e
+
+    def add_contains_a_column(self) -> pd.DataFrame:
+        """
+        Adds a 'contains_a' column to the DataFrame based on 'a_count'.
+        If a_count > 0, contains_a is 'YES'; otherwise, 'NO'.
+        """
+        try:
+            if "a_count" not in self.df.columns:
+                raise ValueError(
+                    "'a_count' column is missing. Run add_a_count_column first."
+                )
+
+            self.df["contains_a"] = self.df["a_count"].apply(
+                lambda x: "YES" if x > 0 else "NO"
+            )
+            logger.info("Added 'contains_a' column based on 'a_count'.")
+            return self.df
+        except Exception as e:
+            raise ValueError(f"Error adding 'contains_a' column: {e}") from e
