@@ -28,3 +28,29 @@ def test_write_csv_success(tmp_path):
 
     loaded_df = pd.read_csv(file_path)
     assert loaded_df.equals(df)
+
+
+def test_add_a_count_column(tmp_path):
+    # Setup
+    test_data = pd.DataFrame(
+        {
+            "FinInstrmGnlAttrbts.FullNm": [
+                "Alpha Asset",
+                "Beta",
+                "Gamma Capital",
+                "",
+                None,
+            ]
+        }
+    )
+
+    temp_file = tmp_path / "test.csv"
+    test_data.to_csv(temp_file, index=False)
+
+    # Act
+    handler = CSVHandler(str(temp_file))
+    df = handler.add_a_count_column()
+
+    expected_counts = [1, 1, 4, 0, 0]
+    assert "a_count" in df.columns
+    assert df["a_count"].tolist() == expected_counts

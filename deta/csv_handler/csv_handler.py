@@ -39,3 +39,22 @@ class CSVHandler:
             logger.info(f"Successfully wrote DataFrame to CSV file: {self.file_path}")
         except Exception as e:
             raise ValueError(f"Error writing to CSV file: {e}")
+
+    def add_a_count_column(self) -> pd.DataFrame:
+        """
+        Adds a new column 'a_count' to the DataFrame, which counts the number of times
+        the lowercase character 'a' appears in the 'FinInstrmGnlAttrbts.FullNm' column.
+        """
+        try:
+            if "FinInstrmGnlAttrbts.FullNm" not in self.df.columns:
+                raise ValueError(
+                    "Column 'FinInstrmGnlAttrbts.FullNm' not found in the CSV."
+                )
+
+            self.df["a_count"] = self.df["FinInstrmGnlAttrbts.FullNm"].apply(
+                lambda x: str(x).count("a") if pd.notna(x) else 0
+            )
+            return self.df
+
+        except Exception as e:
+            raise ValueError(f"Error adding 'a_count' column: {e}") from e
