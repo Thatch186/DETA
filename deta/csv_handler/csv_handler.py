@@ -1,5 +1,7 @@
+import os
 import pandas as pd
 import logging
+import fsspec
 
 logger = logging.getLogger(__name__)
 
@@ -77,3 +79,39 @@ class CSVHandler:
             return self.df
         except Exception as e:
             raise ValueError(f"Error adding 'contains_a' column: {e}") from e
+
+    def upload_file(self, destination_type: str, destination_path: str) -> None:
+        """
+        Uploads the CSV to a specified destination: local, S3, or Azure blob.
+
+        Args:
+            destination_type: One of "local", "s3", or "blob"
+            destination_path: File path or URI (e.g., "data/final.csv", "s3://bucket/folder/file.csv")
+
+        Raises:
+            ValueError: If upload fails or destination_type is invalid.
+        """
+        try:
+            if destination_type == "local":
+                os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+                self.df.to_csv(destination_path, index=False)
+                logger.info(f"CSV saved locally at: {destination_path}")
+
+            elif destination_type in {"s3", "blob"}:
+                protocol = "s3" if destination_type == "s3" else "az"
+                url = f"{protocol}://{destination_path}"
+                fs, _, paths = fsspec.get_fs_token_paths(url)
+
+                with fs.open(url, "w") as f:
+                    self.df.to_csv(f, index=False)
+
+                logger.info(f"CSV uploaded to {destination_type.upper()} at: {url}")
+
+            else:
+                raise ValueError(f"Unsupported destination type: {destination_type}")
+
+        except Exception as e:
+            logger.error(
+                f"Failed to upload CSV to {destination_type.upper()} at {destination_path}: {e}"
+            )
+            raise ValueError(f"Upload error: {e}") from e

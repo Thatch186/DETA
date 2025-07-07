@@ -39,6 +39,11 @@ def main() -> None:
         csv_handler.add_contains_a_column()
         csv_handler.write_csv()
 
+        csv_handler.upload_file(
+            destination_type="local", destination_path="data/final/final.csv"
+        )
+        # csv_handler.upload_file(destination_type="s3", destination_path="mock-bucket/final.csv")
+        # csv_handler.upload_file(destination_type="blob", destination_path="container/path/final.csv")
     except Exception as e:
         logging.error(f"Failed to download file: {e}")
 
