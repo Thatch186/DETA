@@ -24,14 +24,13 @@ def test_write_csv_success(tmp_path):
     df.to_csv(file_path, index=False)
 
     handler = CSVHandler(str(file_path))
-    handler.write_csv(df)
+    handler.write_csv()
 
     loaded_df = pd.read_csv(file_path)
     assert loaded_df.equals(df)
 
 
 def test_add_a_count_column(tmp_path):
-    # Setup
     test_data = pd.DataFrame(
         {
             "FinInstrmGnlAttrbts.FullNm": [
@@ -47,7 +46,6 @@ def test_add_a_count_column(tmp_path):
     temp_file = tmp_path / "test.csv"
     test_data.to_csv(temp_file, index=False)
 
-    # Act
     handler = CSVHandler(str(temp_file))
     df = handler.add_a_count_column()
 

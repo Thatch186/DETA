@@ -1,5 +1,6 @@
 from deta.downloader.downloader import Downloader
 from deta.xml_handler.xml_handler import XMLHandler
+from deta.csv_handler.csv_handler import CSVHandler
 import logging
 
 logging.basicConfig(
@@ -32,7 +33,11 @@ def main() -> None:
         csv_path = second_handler.convert_to_csv(
             output_csv_path="data/extracted_xml/converted.csv"
         )
-        logging.info(f"CSV saved to: {csv_path}")
+
+        csv_handler = CSVHandler(csv_path)
+        csv_handler.add_a_count_column()
+        csv_handler.add_contains_a_column()
+        csv_handler.write_csv()
 
     except Exception as e:
         logging.error(f"Failed to download file: {e}")

@@ -28,14 +28,14 @@ class CSVHandler:
         except Exception as e:
             raise ValueError(f"Error reading CSV file: {e}")
 
-    def write_csv(self, df: pd.DataFrame) -> None:
+    def write_csv(self) -> None:
         """
         Writes a DataFrame to a CSV file.
         Args:
             df: DataFrame to be written to the CSV file.
         """
         try:
-            df.to_csv(self.file_path, index=False)
+            self.df.to_csv(self.file_path, index=False)
             logger.info(f"Successfully wrote DataFrame to CSV file: {self.file_path}")
         except Exception as e:
             raise ValueError(f"Error writing to CSV file: {e}")
